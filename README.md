@@ -67,6 +67,8 @@ My primary development platform is Fedora Linux.  With a proper build environmen
 
 *Linux is the only officially supported platform.  I do my best to support MacOS as well, due to it's Unix-like feel. There is no support for Windows whatsoever, end of story!*
 
-This github site is to host the source code for this project.  No releases have ever been posted for *any* platform.  The Windows builds that were hosted here were clearly described as 'courtesy builds' and nothing more.  Thanks to a few out there that refused to accept or understand that, there will no longer be any builds hosted on github.  In time, I will host Windows builds at a separate location.  These builds will always be low priority and completey unsupported.
+Windows builds are located here http://www.dudetronics.com/index.php/dudestar-windows-builds
+
+These builds will always be low priority and completey unsupported. This github site is to host the source code for this project.  No releases have ever been posted for *any* platform.  The Windows builds that were hosted here were clearly described as 'courtesy builds' and nothing more.  Thanks to a few out there that refused to accept or understand that, there will no longer be any builds hosted on github.
 
 

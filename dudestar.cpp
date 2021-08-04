@@ -1098,7 +1098,7 @@ void DudeStar::process_dmr_hosts()
 				qDebug() << i;
 				QStringList line = i.simplified().split(' ');
 
-				if(line.at(0) == "REF"){
+				if(line.at(0) == "DMR"){
 					hostmap[line.at(1).simplified()] = line.at(2).simplified() + "," + line.at(3).simplified() + "," + line.at(4).simplified();
 				}
 			}

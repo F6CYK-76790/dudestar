@@ -102,7 +102,7 @@ MBEDecoder::~MBEDecoder()
 void MBEDecoder::initMbeParms()
 {
 	mbe_initMbeParms(m_mbelibParms->m_cur_mp, m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced);
-	m_errs = 0;
+	//m_errs = 0;
 	m_errs2 = 0;
 	m_err_str[0] = 0;
 
@@ -127,7 +127,7 @@ void MBEDecoder::process_dstar(unsigned char *d)
 		}
 	}
 
-	mbe_processAmbe3600x2400Framef(m_audio_out_temp_buf, &m_errs, &m_errs2, m_err_str, ambe_fr, ambe_d,m_mbelibParms-> m_cur_mp, m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
+	mbe_processAmbe3600x2400Framef(m_audio_out_temp_buf, &m_errs2, m_err_str, ambe_fr, ambe_d,m_mbelibParms-> m_cur_mp, m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
     processAudio();
 }
 
@@ -152,7 +152,7 @@ void MBEDecoder::process_dmr(unsigned char *d)
 		}
 	}
 
-	mbe_processAmbe3600x2450Framef(m_audio_out_temp_buf, &m_errs, &m_errs2, m_err_str, ambe_fr, ambe_d,m_mbelibParms-> m_cur_mp, m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
+	mbe_processAmbe3600x2450Framef(m_audio_out_temp_buf, &m_errs2, m_err_str, ambe_fr, ambe_d,m_mbelibParms-> m_cur_mp, m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
 	processAudio();
 }
 
@@ -270,19 +270,19 @@ void MBEDecoder::ambe49to72(char ambe_data[49], char data[9])
 
 void MBEDecoder::process_frame(char ambe_fr[4][24])
 {
-	mbe_processAmbe3600x2450Framef(m_audio_out_temp_buf, &m_errs, &m_errs2, m_err_str, ambe_fr, ambe_d,m_mbelibParms-> m_cur_mp, m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
+	mbe_processAmbe3600x2450Framef(m_audio_out_temp_buf, &m_errs2, m_err_str, ambe_fr, ambe_d,m_mbelibParms-> m_cur_mp, m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
 	processAudio();
 }
 
 void MBEDecoder::processData(char ambe_data[49])
 {
-	mbe_processAmbe2450Dataf(m_audio_out_temp_buf, &m_errs,&m_errs2, m_err_str, ambe_data, m_mbelibParms->m_cur_mp,m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
+	mbe_processAmbe2450Dataf(m_audio_out_temp_buf, &m_errs2, m_err_str, ambe_data, m_mbelibParms->m_cur_mp,m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
 	processAudio();
 }
 
 void MBEDecoder::processData4400(char imbe_data[88])
 {
-	mbe_processImbe4400Dataf(m_audio_out_temp_buf, &m_errs,&m_errs2, m_err_str, imbe_data, m_mbelibParms->m_cur_mp,m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
+	mbe_processImbe4400Dataf(m_audio_out_temp_buf, &m_errs2, m_err_str, imbe_data, m_mbelibParms->m_cur_mp,m_mbelibParms->m_prev_mp, m_mbelibParms->m_prev_mp_enhanced, 3);
 	processAudio();
 }
 

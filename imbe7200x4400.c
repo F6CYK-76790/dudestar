@@ -511,7 +511,7 @@ mbe_demodulateImbe7200x4400Data (char imbe[8][23])
 }
 
 void
-mbe_processImbe4400Dataf (float *aout_buf, int *errs, int *errs2, char *err_str, char imbe_d[88], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
+mbe_processImbe4400Dataf (float *aout_buf, int *errs2, char *err_str, char imbe_d[88], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
 {
 
   int i, bad;
@@ -552,33 +552,33 @@ mbe_processImbe4400Dataf (float *aout_buf, int *errs, int *errs2, char *err_str,
 }
 
 void
-mbe_processImbe4400Data (short *aout_buf, int *errs, int *errs2, char *err_str, char imbe_d[88], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
+mbe_processImbe4400Data (short *aout_buf, int *errs2, char *err_str, char imbe_d[88], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
 {
   float float_buf[160];
 
-  mbe_processImbe4400Dataf (float_buf, errs, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+  mbe_processImbe4400Dataf (float_buf, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
   mbe_floattoshort (float_buf, aout_buf);
 }
 
 void
-mbe_processImbe7200x4400Framef (float *aout_buf, int *errs, int *errs2, char *err_str, char imbe_fr[8][23], char imbe_d[88], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
+mbe_processImbe7200x4400Framef (float *aout_buf, int *errs2, char *err_str, char imbe_fr[8][23], char imbe_d[88], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
 {
 
-  *errs = 0;
+  int errs = 0;
   *errs2 = 0;
-  *errs = mbe_eccImbe7200x4400C0 (imbe_fr);
+  errs = mbe_eccImbe7200x4400C0 (imbe_fr);
   mbe_demodulateImbe7200x4400Data (imbe_fr);
-  *errs2 = *errs;
+  *errs2 = errs;
   *errs2 += mbe_eccImbe7200x4400Data (imbe_fr, imbe_d);
 
-  mbe_processImbe4400Dataf (aout_buf, errs, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+  mbe_processImbe4400Dataf (aout_buf, errs2, err_str, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
 }
 
 void
-mbe_processImbe7200x4400Frame (short *aout_buf, int *errs, int *errs2, char *err_str, char imbe_fr[8][23], char imbe_d[88], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
+mbe_processImbe7200x4400Frame (short *aout_buf, int *errs2, char *err_str, char imbe_fr[8][23], char imbe_d[88], mbe_parms * cur_mp, mbe_parms * prev_mp, mbe_parms * prev_mp_enhanced, int uvquality)
 {
 
   float float_buf[160];
-  mbe_processImbe7200x4400Framef (float_buf, errs, errs2, err_str, imbe_fr, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
+  mbe_processImbe7200x4400Framef (float_buf, errs2, err_str, imbe_fr, imbe_d, cur_mp, prev_mp, prev_mp_enhanced, uvquality);
   mbe_floattoshort (float_buf, aout_buf);
 }

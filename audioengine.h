@@ -19,6 +19,8 @@
 #define AUDIOENGINE_H
 
 #include <QObject>
+#include <QAudio>
+#include <QAudioFormat>
 #include <QAudioOutput>
 #include <QAudioInput>
 #include <QQueue>

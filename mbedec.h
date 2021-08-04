@@ -65,7 +65,7 @@ private:
     float m_upsamplerLastValue;
 
     mbelibParms *m_mbelibParms;
-    int m_errs;
+	//int m_errs;
     int m_errs2;
     char m_err_str[64];
 

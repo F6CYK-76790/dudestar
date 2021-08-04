@@ -249,7 +249,7 @@ void P25Codec::send_disconnect()
 
 void P25Codec::process_modem_data(QByteArray d)
 {
-
+	qDebug() << d;
 }
 
 void P25Codec::transmit()

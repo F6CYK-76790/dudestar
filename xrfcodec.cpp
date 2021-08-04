@@ -436,125 +436,132 @@ void XRFCodec::transmit()
 
 void XRFCodec::send_frame(uint8_t *ambe)
 {
-	static QByteArray txdata;
+	QByteArray txdata;
 	static uint16_t txstreamid = 0;
 	static bool sendheader = 1;
+
+	if(txstreamid == 0){
+		txstreamid = static_cast<uint16_t>((::rand() & 0xFFFF));
+	}
+
+	if(sendheader){
+		sendheader = 0;
+		txdata.resize(56);
+		txdata[0] = 0x44;
+		txdata[1] = 0x53;
+		txdata[2] = 0x56;
+		txdata[3] = 0x54;
+		txdata[4] = 0x10;
+		txdata[5] = 0x00;
+		txdata[6] = 0x00;
+		txdata[7] = 0x00;
+		txdata[8] = 0x20;
+		txdata[9] = 0x00;
+		txdata[10] = 0x01;
+		txdata[11] = 0x02;
+		txdata[12] = txstreamid & 0xff;
+		txdata[13] = (txstreamid >> 8) & 0xff;
+		txdata[14] = 0x80;
+		txdata[15] = 0x00;
+		txdata[16] = 0x00;
+		txdata[17] = 0x00;
+		txdata.replace(18, 8, m_txrptr2.toLocal8Bit().data());
+		txdata.replace(26, 8, m_txrptr1.toLocal8Bit().data());
+		txdata.replace(34, 8, m_txurcall.toLocal8Bit().data());
+		txdata.replace(42, 8, m_txmycall.toLocal8Bit().data());
+		txdata.replace(50, 4, "AMBE");
+		CCRC::addCCITT161((uint8_t *)txdata.data() + 15, 41);
+
+		m_modeinfo.src = m_txmycall;
+		m_modeinfo.dst = m_txurcall;
+		m_modeinfo.gw = m_txrptr1;
+		m_modeinfo.gw2 = m_txrptr2;
+		m_modeinfo.streamid = txstreamid;
+		m_modeinfo.frame_number = m_txcnt;
+	}
+	else{
+		txdata.resize(27);
+		txdata[0] = 0x44;
+		txdata[1] = 0x53;
+		txdata[2] = 0x56;
+		txdata[3] = 0x54;
+		txdata[4] = 0x20;
+		txdata[5] = 0x00;
+		txdata[6] = 0x00;
+		txdata[7] = 0x00;
+		txdata[8] = 0x20;
+		txdata[9] = 0x00;
+		txdata[10] = 0x01;
+		txdata[11] = 0x02;
+		txdata[12] = txstreamid & 0xff;
+		txdata[13] = (txstreamid >> 8) & 0xff;
+		txdata[14] = m_txcnt % 21;
+		memcpy(txdata.data() + 15, ambe, 9);
+
+		switch(txdata.data()[14]){
+		case 0:
+			txdata[24] = 0x55;
+			txdata[25] = 0x2d;
+			txdata[26] = 0x16;
+			break;
+		case 1:
+			txdata[24] = 0x40 ^ 0x70;
+			txdata[25] = m_txusrtxt.toLocal8Bit().data()[0] ^ 0x4f;
+			txdata[26] = m_txusrtxt.toLocal8Bit().data()[1] ^ 0x93;
+			break;
+		case 2:
+			txdata[24] = m_txusrtxt.toLocal8Bit().data()[2] ^ 0x70;
+			txdata[25] = m_txusrtxt.toLocal8Bit().data()[3] ^ 0x4f;
+			txdata[26] = m_txusrtxt.toLocal8Bit().data()[4] ^ 0x93;
+			break;
+		case 3:
+			txdata[24] = 0x41 ^ 0x70;
+			txdata[25] = m_txusrtxt.toLocal8Bit().data()[5] ^ 0x4f;
+			txdata[26] = m_txusrtxt.toLocal8Bit().data()[6] ^ 0x93;
+			break;
+		case 4:
+			txdata[24] = m_txusrtxt.toLocal8Bit().data()[7] ^ 0x70;
+			txdata[25] = m_txusrtxt.toLocal8Bit().data()[8] ^ 0x4f;
+			txdata[26] = m_txusrtxt.toLocal8Bit().data()[9] ^ 0x93;
+			break;
+		case 5:
+			txdata[24] = 0x42 ^ 0x70;
+			txdata[25] = m_txusrtxt.toLocal8Bit().data()[10] ^ 0x4f;
+			txdata[26] = m_txusrtxt.toLocal8Bit().data()[11] ^ 0x93;
+			break;
+		case 6:
+			txdata[24] = m_txusrtxt.toLocal8Bit().data()[12] ^ 0x70;
+			txdata[25] = m_txusrtxt.toLocal8Bit().data()[13] ^ 0x4f;
+			txdata[26] = m_txusrtxt.toLocal8Bit().data()[14] ^ 0x93;
+			break;
+		case 7:
+			txdata[24] = 0x43 ^ 0x70;
+			txdata[25] = m_txusrtxt.toLocal8Bit().data()[15] ^ 0x4f;
+			txdata[26] = m_txusrtxt.toLocal8Bit().data()[16] ^ 0x93;
+			break;
+		case 8:
+			txdata[24] = m_txusrtxt.toLocal8Bit().data()[17] ^ 0x70;
+			txdata[25] = m_txusrtxt.toLocal8Bit().data()[18] ^ 0x4f;
+			txdata[26] = m_txusrtxt.toLocal8Bit().data()[19] ^ 0x93;
+			break;
+		default:
+			txdata[24] = 0x16;
+			txdata[25] = 0x29;
+			txdata[26] = 0xf5;
+			break;
+		}
+	}
+
 	if(m_tx){
-		if(txstreamid == 0){
-		   txstreamid = static_cast<uint16_t>((::rand() & 0xFFFF));
-		}
-		if(sendheader){
-			sendheader = 0;
-			//txdata.clear();
-			txdata.resize(56);
-			txdata[0] = 0x44;
-			txdata[1] = 0x53;
-			txdata[2] = 0x56;
-			txdata[3] = 0x54;
-			txdata[4] = 0x10;
-			txdata[5] = 0x00;
-			txdata[6] = 0x00;
-			txdata[7] = 0x00;
-			txdata[8] = 0x20;
-			txdata[9] = 0x00;
-			txdata[10] = 0x01;
-			txdata[11] = 0x02;
-			txdata[12] = txstreamid & 0xff;
-			txdata[13] = (txstreamid >> 8) & 0xff;
-			txdata[14] = 0x80;
-			txdata[15] = 0x00;
-			txdata[16] = 0x00;
-			txdata[17] = 0x00;
-			//memcpy(txdata.data() + 20, ui->rptr1Edit->text().toStdString().c_str(), 8);
-			memcpy(txdata.data() + 18, m_txrptr2.toLocal8Bit().data(), 8);
-			memcpy(txdata.data() + 26, m_txrptr1.toLocal8Bit().data(), 8);
-			memcpy(txdata.data() + 34, m_txurcall.toLocal8Bit().data(), 8);
-			memcpy(txdata.data() + 42, m_txmycall.toLocal8Bit().data(), 8);
-			memcpy(txdata.data() + 50, "AMBE", 4);
-			CCRC::addCCITT161((uint8_t *)txdata.data() + 15, 41);
-
-			m_modeinfo.src = m_txmycall;
-			m_modeinfo.dst = m_txurcall;
-			m_modeinfo.gw = m_txrptr1;
-			m_modeinfo.gw2 = m_txrptr2;
-			m_modeinfo.streamid = txstreamid;
-			m_modeinfo.frame_number = m_txcnt;
-
-			m_udp->writeDatagram(txdata, m_address, m_modeinfo.port);
-		}
-		else{
-			txdata.resize(27);
-			txdata[4] = 0x20;
-			txdata[14] = m_txcnt % 21;
-			memcpy(txdata.data() + 15, ambe, 9);
-
-			switch(txdata.data()[14]){
-			case 0:
-				txdata[24] = 0x55;
-				txdata[25] = 0x2d;
-				txdata[26] = 0x16;
-				break;
-			case 1:
-				txdata[24] = 0x40 ^ 0x70;
-				txdata[25] = m_txusrtxt.toLocal8Bit().data()[0] ^ 0x4f;
-				txdata[26] = m_txusrtxt.toLocal8Bit().data()[1] ^ 0x93;
-				break;
-			case 2:
-				txdata[24] = m_txusrtxt.toLocal8Bit().data()[2] ^ 0x70;
-				txdata[25] = m_txusrtxt.toLocal8Bit().data()[3] ^ 0x4f;
-				txdata[26] = m_txusrtxt.toLocal8Bit().data()[4] ^ 0x93;
-				break;
-			case 3:
-				txdata[24] = 0x41 ^ 0x70;
-				txdata[25] = m_txusrtxt.toLocal8Bit().data()[5] ^ 0x4f;
-				txdata[26] = m_txusrtxt.toLocal8Bit().data()[6] ^ 0x93;
-				break;
-			case 4:
-				txdata[24] = m_txusrtxt.toLocal8Bit().data()[7] ^ 0x70;
-				txdata[25] = m_txusrtxt.toLocal8Bit().data()[8] ^ 0x4f;
-				txdata[26] = m_txusrtxt.toLocal8Bit().data()[9] ^ 0x93;
-				break;
-			case 5:
-				txdata[24] = 0x42 ^ 0x70;
-				txdata[25] = m_txusrtxt.toLocal8Bit().data()[10] ^ 0x4f;
-				txdata[26] = m_txusrtxt.toLocal8Bit().data()[11] ^ 0x93;
-				break;
-			case 6:
-				txdata[24] = m_txusrtxt.toLocal8Bit().data()[12] ^ 0x70;
-				txdata[25] = m_txusrtxt.toLocal8Bit().data()[13] ^ 0x4f;
-				txdata[26] = m_txusrtxt.toLocal8Bit().data()[14] ^ 0x93;
-				break;
-			case 7:
-				txdata[24] = 0x43 ^ 0x70;
-				txdata[25] = m_txusrtxt.toLocal8Bit().data()[15] ^ 0x4f;
-				txdata[26] = m_txusrtxt.toLocal8Bit().data()[16] ^ 0x93;
-				break;
-			case 8:
-				txdata[24] = m_txusrtxt.toLocal8Bit().data()[17] ^ 0x70;
-				txdata[25] = m_txusrtxt.toLocal8Bit().data()[18] ^ 0x4f;
-				txdata[26] = m_txusrtxt.toLocal8Bit().data()[19] ^ 0x93;
-				break;
-			default:
-				txdata[24] = 0x16;
-				txdata[25] = 0x29;
-				txdata[26] = 0xf5;
-				break;
-			}
-			m_txcnt++;
-			m_udp->writeDatagram(txdata, m_address, m_modeinfo.port);
-		}
-		emit update_output_level(m_audio->level());
-		update(m_modeinfo);
+		m_txcnt++;
 	}
 	else{
 		txdata[14] = (++m_txcnt % 21) | 0x40;
-		m_udp->writeDatagram(txdata, m_address, m_modeinfo.port);
 		m_txcnt = 0;
 		txstreamid = 0;
 		m_modeinfo.streamid = 0;
 		sendheader = 1;
 		m_txtimer->stop();
-		m_udp->writeDatagram(txdata, m_address, m_modeinfo.port);
 
 		if((m_ttsid == 0) && (m_modeinfo.stream_state == TRANSMITTING) ){
 			m_audio->stop_capture();
@@ -563,15 +570,20 @@ void XRFCodec::send_frame(uint8_t *ambe)
 		m_ttscnt = 0;
 		m_modeinfo.stream_state = STREAM_IDLE;
 	}
+
+	m_udp->writeDatagram(txdata, m_address, m_modeinfo.port);
+	emit update_output_level(m_audio->level());
+	update(m_modeinfo);
 #ifdef DEBUG
-			fprintf(stderr, "SEND:%d: ", txdata.size());
-			for(int i = 0; i < txdata.size(); ++i){
-				fprintf(stderr, "%02x ", (unsigned char)txdata.data()[i]);
-			}
-			fprintf(stderr, "\n");
-			fflush(stderr);
+	fprintf(stderr, "SEND:%d: ", txdata.size());
+	for(int i = 0; i < txdata.size(); ++i){
+		fprintf(stderr, "%02x ", (unsigned char)txdata.data()[i]);
+	}
+	fprintf(stderr, "\n");
+	fflush(stderr);
 #endif
 }
+
 #ifdef AMBEHW_SUPPORTED
 void XRFCodec::get_ambe()
 {
@@ -584,6 +596,7 @@ void XRFCodec::get_ambe()
 	}
 }
 #endif
+
 void XRFCodec::process_rx_data()
 {
 	int nbAudioSamples = 0;

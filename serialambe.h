@@ -51,6 +51,8 @@ private:
 	void encode_2020(int16_t *);
 	void decode_3000(uint8_t *);
 	void encode_3000(int16_t *);
+	void process_serial_2020();
+	void process_serial_3000();
 signals:
 	void data_ready();
 };

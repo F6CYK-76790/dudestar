@@ -24,7 +24,6 @@
 
 #define ENDLINE "\n"
 
-//#define DEBUGHW
 //#define DEBUG
 
 const uint8_t AMBEP251_4400_2800[17] = {0x61, 0x00, 0x0d, 0x00, 0x0a, 0x05U, 0x58U, 0x08U, 0x6BU, 0x10U, 0x30U, 0x00U, 0x00U, 0x00U, 0x00U, 0x01U, 0x90U};//DVSI P25 USB Dongle FEC
@@ -79,15 +78,29 @@ QMap<QString, QString> SerialAMBE::discover_devices()
 
 void SerialAMBE::connect_to_serial(QString p)
 {
+	const QString blankString = "N/A";
 	int br = 460800;
 
 	if((m_protocol != "P25") && (m_protocol != "M17") && (p != "")){
+		m_serial = new QSerialPort;
+		m_serial->setPortName(p);
+
+		QSerialPortInfo info(*m_serial);
+		QString out = "Port: " + info.portName() + ENDLINE
+			+ "Location: " + info.systemLocation() + ENDLINE
+			+ "Description: " + (!info.description().isEmpty() ? info.description() : blankString) + ENDLINE
+			+ "Manufacturer: " + (!info.manufacturer().isEmpty() ? info.manufacturer() : blankString) + ENDLINE
+			+ "Serial number: " + (!info.serialNumber().isEmpty() ? info.serialNumber() : blankString) + ENDLINE
+			+ "Vendor Identifier: " + (info.hasVendorIdentifier() ? QByteArray::number(info.vendorIdentifier(), 16) : blankString) + ENDLINE
+			+ "Product Identifier: " + (info.hasProductIdentifier() ? QByteArray::number(info.productIdentifier(), 16) : blankString) + ENDLINE
+			+ "Busy: " + (info.isBusy() ? "Yes" : "No") + ENDLINE;
+		fprintf(stderr, "%s", out.toStdString().c_str());fflush(stderr);
+		m_description = info.description();
+
 		if(m_description == "DV Dongle"){
 			br = 230400;
 		}
 
-		m_serial = new QSerialPort;
-		m_serial->setPortName(p);
 		m_serial->setBaudRate(br);
 		m_serial->setDataBits(QSerialPort::Data8);
 		m_serial->setStopBits(QSerialPort::OneStop);
@@ -128,7 +141,7 @@ void SerialAMBE::connect_to_serial(QString p)
 				packet_size = 9;
 			}
 			m_serial->write(a);
-#ifdef DEBUGHW
+#ifdef DEBUG
 			fprintf(stderr, "SENDHW %d:%d:", a.size(), m_serialdata.size());
 			for(int i = 0; i < a.size(); ++i){
 				//if((d.data()[i] == 0x61) && (data.data()[i+1] == 0x01) && (data.data()[i+2] == 0x42) && (data.data()[i+3] == 0x02)){
@@ -188,7 +201,7 @@ void SerialAMBE::encode(int16_t *audio)
 		packet [(i*2)+7] = (audio[i] >> 8) & 0xff;
 		packet [(i*2)+8] = audio[i] & 0xff;
 	}
-	m_serial->write((char *)packet, 327);
+	int r = m_serial->write((char *)packet, 327);
 #ifdef DEBUG
 			fprintf(stderr, "SENDHW:%d: ", r);
 			for(int i = 0; i < 326; ++i){
@@ -213,7 +226,7 @@ void SerialAMBE::process_serial()
 	for(int i = 0; i < d.size(); i++){
 		m_serialdata.append(d[i]);
 	}
-#ifdef DEBUGHW
+#ifdef DEBUG
 	fprintf(stderr, "AMBEHW %d:%d:", d.size(), m_serialdata.size());
 	for(int i = 0; i < d.size(); ++i){
 		//if((d.data()[i] == 0x61) && (data.data()[i+1] == 0x01) && (data.data()[i+2] == 0x42) && (data.data()[i+3] == 0x02)){
@@ -225,6 +238,36 @@ void SerialAMBE::process_serial()
 	fflush(stderr);
 #endif
 
+	if(m_description == "DV Dongle"){
+		process_serial_2020();
+	}
+	else{
+		process_serial_3000();
+	}
+}
+
+void SerialAMBE::process_serial_2020()
+{
+	if( (m_serialdata.size() > 321) &&
+		((uint8_t)m_serialdata[0] == 0x42) &&
+		((uint8_t)m_serialdata[1] == 0x81)
+		)
+	{
+		emit data_ready();
+	}
+	if( (m_serialdata.size() > 49) &&
+		((uint8_t)m_serialdata[0] == 0x32) &&
+		((uint8_t)m_serialdata[1] == 0xa0) &&
+		((uint8_t)m_serialdata[0] == 0xec) &&
+		((uint8_t)m_serialdata[1] == 0x13)
+		)
+	{
+		emit data_ready();
+	}
+}
+
+void SerialAMBE::process_serial_3000()
+{
 	if( (m_serialdata.size() > 3) &&
 		(m_serialdata[0] == 0x61) &&
 		(m_serialdata[3] == 0x00)
